@@ -10,7 +10,7 @@ loop is seamless — no jump when it restarts.
 
 ## Install
 
-### AUR (recommended, Arch Linux)
+### AUR (temporarily unavailable, no AUR package for now)
 
 ```bash
 paru -S portalfetch-git
@@ -23,7 +23,7 @@ This pulls in `anifetch-cli`, `chafa`, and `ffmpeg` automatically.
 ### Manual install (any distro with anifetch already set up)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/portalfetch.git
+git clone https://github.com/fg-foss/portalfetch.git
 cd portalfetch
 ./install.sh
 ```
