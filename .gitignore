@@ -1,0 +1,11 @@
+# Arch packaging build artifacts (created by makepkg)
+pkg/
+src/
+*.pkg.tar.zst
+*.pkg.tar.xz
+*.log
+
+# OS/editor cruft
+.DS_Store
+*.swp
+*~

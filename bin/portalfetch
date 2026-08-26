@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# portalfetch — an animated Rick and Morty portal logo for anifetch.
+# https://github.com/YOUR_USERNAME/portalfetch
+#
+# Recolors both the logo AND fastfetch's info text to match. anifetch's
+# own CLI parser rejects unrecognized flags outright (confirmed against
+# its --help output), so passing fastfetch's --color flag through anifetch
+# doesn't work. Instead: fastfetch reads its config from
+# $XDG_CONFIG_HOME/fastfetch/. This script makes a throwaway copy of your
+# REAL fastfetch config, patches in a color override, points a temporary
+# XDG_CONFIG_HOME at that copy for this one command only, then deletes it.
+# Your actual ~/.config/fastfetch/config.jsonc is never touched.
+set -euo pipefail
+
+COLOR="green"
+EXTRA_ARGS=()
+
+usage() {
+    cat <<EOF
+portalfetch [proto|evil] [anifetch args...]
+
+  (no argument)   Green portal (default)
+  proto           Blue portal
+  evil            Gold portal
+  -h, --help      Show this help
+
+Recolors both the portal logo and fastfetch's info text. Any other
+arguments are passed straight through to anifetch, e.g.:
+  portalfetch proto --force-render
+  portalfetch evil -ca "--symbols ascii+block"
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        proto)     COLOR="blue"; shift ;;
+        evil)      COLOR="gold"; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) EXTRA_ARGS+=("$1"); shift ;;
+    esac
+done
+
+case "$COLOR" in
+    green) FF_COLOR="green" ;;
+    blue)  FF_COLOR="blue" ;;
+    gold)  FF_COLOR="yellow" ;;
+esac
+
+if [[ -d "/usr/share/portalfetch" ]]; then
+    ASSET_DIR="/usr/share/portalfetch"
+elif [[ -d "/usr/local/share/portalfetch" ]]; then
+    ASSET_DIR="/usr/local/share/portalfetch"
+else
+    ASSET_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../assets" && pwd)"
+fi
+
+GIF="$ASSET_DIR/portal-${COLOR}.gif"
+
+if [[ ! -f "$GIF" ]]; then
+    echo "portalfetch: unknown color '$COLOR' (looked for $GIF)" >&2
+    echo "usage: portalfetch [proto|evil]" >&2
+    exit 1
+fi
+
+if ! command -v anifetch &>/dev/null; then
+    echo "portalfetch: anifetch is not installed or not on PATH." >&2
+    echo "  Arch/AUR: paru -S anifetch-cli" >&2
+    echo "  Other:    see https://github.com/Notenlish/anifetch" >&2
+    exit 1
+fi
+
+REAL_CONFIG="$HOME/.config/fastfetch/config.jsonc"
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+mkdir -p "$TMPDIR/fastfetch"
+
+if [[ -f "$REAL_CONFIG" ]]; then
+    cp "$REAL_CONFIG" "$TMPDIR/fastfetch/config.jsonc"
+    sed -i '$ s/}[[:space:]]*$/,\n  "color": "'"$FF_COLOR"'"\n}/' "$TMPDIR/fastfetch/config.jsonc"
+else
+    cat > "$TMPDIR/fastfetch/config.jsonc" <<EOF
+{
+  "color": "$FF_COLOR"
+}
+EOF
+fi
+
+XDG_CONFIG_HOME="$TMPDIR" exec anifetch "$GIF" -ca "--symbols ascii" "${EXTRA_ARGS[@]}"
