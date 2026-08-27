@@ -82,4 +82,4 @@ GPLv3 — see [LICENSE](LICENSE).
 
 ## AI Notice
 
-Artificial Intelligence was used partially in this project.
+[Artificial Intelligence](https://claude.ai) was used partially in this project.
